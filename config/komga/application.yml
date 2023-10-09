@@ -1,0 +1,19 @@
+komga:
+  ## Comment if you don't want automatic account creation.
+  oauth2-account-creation: true
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          authelia:
+            client-id: komga
+            client-secret: {SECRET}
+            client-name: Authelia
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri:
+        provider:
+          authelia:
+            issuer-uri:
+            user-name-attribute: preferred_username

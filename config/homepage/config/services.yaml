@@ -1,0 +1,98 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/en/configs/services
+
+- Services:
+    - Jellyfin:
+        href: http://jellyfin.seahouse/
+        icon: jellyfin.png
+        description: Open source film/series media server
+        container: jellyfin
+        widget:
+          type: jellyfin
+          url: http://jellyfin:8096
+          key: 165b92574dd24483aa6282e49ebfbaf7 
+          enableBlocks: true # optional, defaults to false
+          enableNowPlaying: true # optional, defaults to true
+    - Komga:
+        href: http://books.seahouse
+        icon: komga.png
+        container: komga
+        description: Open source comics/mangas media server
+        widget:
+          type: komga
+          url: http://komga:8080
+          username: davide@girori.net
+          password: XIgeto78!
+    - Wiki:
+        href: http://wiki.seahouse
+        icon: wikijs.png
+        container: wikijs
+        description: Open source wiki software
+    - Synology:
+        href: http://nas.synology
+        icon: https://icon-library.com/images/transparent-folder-icon/transparent-folder-icon-1.jpg 
+        description: Network Attached Storage
+        ping: http://192.168.0.29:5000
+        widget:
+          type: diskstation
+          url: http://192.168.0.29:5000
+          username: davide
+          password: RMtaxuiG!2
+
+- Networking:
+    - Pihole:
+        href: http://pihole.seahouse
+        icon: pi-hole.png
+        container: pihole
+        description: DNS sinkhole for home network
+        widget:
+          type: pihole
+          url: http://pihole
+          key: 5536c470d038c11793b535e8c1176817c001d6f20a4704fa7908939be82e2922
+    - Traefik:
+        href: http://traefik.seahouse
+        description: HTTP reverse proxy and load balancer
+        container: proxy
+        icon: traefik.png
+        widget:
+          type: traefik
+          url: http://proxy:8080
+    - Portainer:
+        href: http://portainer.seahouse
+        icon: portainer.png
+        description: Container Management Software
+        container: portainer
+        widget:
+          type: portainer
+          url: https://portainer:9443
+          env: 2
+          key: ptr_Qs3EsgNHtwqYBMoKb8o7rcbAi+tAOuhMTsexf/zi5m8=
+    - Speedtest:
+        container: speedtest
+        href: http://test.seahouse
+        icon: https://cdn.icon-icons.com/icons2/413/PNG/256/Speedtest_41127.png
+        widget:
+          type: speedtest
+          url: http://speedtest
+- My Third Group:
+    - HomeAssistant:
+        href: http://seahouse2:8123
+        icon: home-assistant.png
+        ping: http://192.168.0.176:8123
+        widget:
+          type: homeassistant
+          url: http://192.168.0.176:8123
+          key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI2YmNlYjRjMjlhMTU0MmVmYTk0OWU0NWRiNDAzYjMxYiIsImlhdCI6MTY5MzYwMDUzNSwiZXhwIjoyMDA4OTYwNTM1fQ.F8l7Fu9Do-I8B_47Scy3ui2hhv27DG-l2YwDxoWZFqg
+          custom:
+            - state: sensor.energy_power_sh2
+              label: ISTANTANEA
+            - state: sensor.energia_daily_sh2
+              label: GIORNALIERO
+            - state: sensor.energiash2
+              label: MENSILE
+    - MeTube:
+        href: https://metube.local
+        icon: https://artifacthub.io/image/57011362-b4aa-4485-a77b-8b744d50708e@3x
+        container: metube
+        description: Download vidoes from YouTube and other sites

@@ -1,0 +1,263 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik
+    container_name: proxy
+    restart: always
+    networks: 
+      - proxy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./config/traefik/letsencrypt:/letsencrypt"
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+      - "--entrypoints.http.http.redirections.entrypoint.to=https"
+      - "--entrypoints.http.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http"
+      - "--certificatesresolvers.letsentrypt.acme.email=${EMAIL}"
+      - "--certificatesresolvers.letsentrypt.acme.storage=${STORAGE}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.routers.traefik.entrypoints=https"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+  
+  authelia:
+    image: authelia/authelia
+    container_name: authelia
+    restart: unless-stopped
+    depends_on: 
+      - redis
+    volumes:
+      - "./config/authelia:/config"
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authelia.rule=Host(`${AUTHELIA_DOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.authelia.entrypoints=https"
+      - "traefik.http.routers.authelia.tls=true"
+      - "traefik.http.routers.authelia.tls.certresolver=letsencrypt"
+        #- "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://authelia.${DOMAIN}"
+        #- "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+        #- "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User, Remote-Groups, Remote-Name, Remote-Email"
+    expose:
+      - 9091
+    environment:
+      TZ: ${TZ}
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    volumes: 
+      - "./data/authelia:/data"
+    expose: 
+      - 6379
+    environment:
+      TZ: ${TZ}
+    networks:
+      - proxy
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    networks: 
+      - proxy
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./data/portainer:/data" 
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_DOMAIN}.${DOMAIN}`)"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - "traefik.http.middlewares.autodetect.contenttype.autodetect=false"
+      - "traefik.http.routers.portainer.entrypoints=https"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
+
+  homepage:
+    image: ghcr.io/benphelps/homepage:latest
+    container_name: homepage
+    networks: 
+      - proxy
+    volumes:
+      - "./config/homepage/config:/app/config"
+      - "./config/homepage/icons:/app/public/icons"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.entrypoints=https"
+      - "traefik.http.routers.homepage.tls=true"
+      - "traefik.http.routers.homepage.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.homepage.rule=Host(`${HOMEPAGE_DOMAIN}.${DOMAIN}`)"
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    networks: 
+      - proxy
+    volumes:
+      - "./config/jellyfin:/config"
+      - "media:/data"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyfin.entrypoints=https"
+      - "traefik.http.routers.jellyfin.tls=true"
+      - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.jellyfin.rule=Host(`${JELLYFIN_DOMAIN}.${DOMAIN}`)"
+
+  wikijs:
+    image: lscr.io/linuxserver/wikijs:latest
+    container_name: wikijs
+    networks: 
+      - proxy
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - "./config/wikijs:/config"
+      - "./data/wikijs:/data"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wiki.rule=Host(`${WIKIJS_DOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.wiki.entrypoints=https"
+      - "traefik.http.routers.wiki.tls=true"
+      - "traefik.http.routers.wiki.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.autodetect.contenttype.autodetect=false"
+  
+  komga:
+    image: gotson/komga
+    container_name: komga
+    restart: unless-stopped
+    networks: 
+      - proxy
+    volumes:
+      - "./config/komga:/config"
+      - "books:/data"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.books.rule=Host(`${KOMGA_DOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.books.entrypoints=https"
+      - "traefik.http.routers.books.tls=true"
+      - "traefik.http.routers.books.tls.certresolver=letsencrypt"
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    networks: 
+      - proxy
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - './config/pihole:/etc/pihole'
+      - './dnsmasq.d:/etc/dnsmasq.d'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
+      - "traefik.http.services.pihole.loadbalancer.server.port=53"
+      - "traefik.http.routers.pihole.entrypoints=https,http"
+      - "traefik.http.routers.pihole.middlewares=pihole-path"
+      - "traefik.http.middlewares.pihole-path.addprefix.prefix=/admin"
+    restart: unless-stopped
+  
+  pialert:
+    image: jokobsk/pi.alert:latest
+    container_name: pialert
+    restart: unless-stopped
+    network_mode: "host"
+    ports:
+      - 20211:20211
+    volumes:
+      - "./config/pialert:/home/pi/pialert/config"
+      - "./data/pialert/db:/home/pi/pialert/db"
+    environment:
+      TZ: "${TZ}"
+      HOST_USER_ID: 1000
+      HPST_USER_GID: 1000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pialert.rule=Host(`${PIALERT_DOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.pialert.entrypoints=https"
+      - "traefik.http.routers.pialert.tls=true"
+      - "traefik.http.routers.pialert.tls.certresolver=letsencrypt"
+      - "traefik.http.services.pialert.loadbalancer.server.port=20211"
+
+  metube:
+    image: ghcr.io/alexta69/metube
+    container_name: metube
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - "./data/metube:/downlads"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.metube.rule=Host(`${METUBE_DOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.metube.entrypoints=https"
+      - "traefik.http.routers.metube.tls=true"
+      - "traefik.http.routers.metube.tls.certresolver=letsencrypt"
+
+  speedtest:
+    container_name: speedtest
+    image: henrywhitaker3/speedtest-tracker
+    restart: unless-stopped
+    networks: 
+      - proxy
+    volumes:
+      - "./config/speedtest:/config"
+    environment:
+      - TZ=${TZ}
+      - PUID=1000
+      - PGID=1000
+      - OOKLA_EULA_GDPR=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.speedtest.entrypoints=https"
+      - "traefik.http.routers.speedtest.rule=Host(`${TEST_DOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.speedtest.tls=true"
+      - "traefik.http.routers.speedtest.tls.certresolver=letsencrypt"
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "200k"
+
+networks:
+  proxy:
+    driver: bridge
+
+volumes:
+  media:
+    name: media
+    driver_opts:
+      type: "nfs"
+      o: "addr=${NAS_ADDRESS},nolock,soft,rw"
+      device: "${PATH_MEDIA}"
+
+  books:
+    name: books
+    driver_opts:
+      type: "nfs"
+      o: "addr=${NAS_ADDRESS},nolock,soft,rw"
+      device: "${PATH_BOOKS}"

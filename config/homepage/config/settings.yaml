@@ -1,0 +1,17 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/en/configs/settings
+
+
+background:
+  image: https://images.pling.com/img/00/00/45/73/00/1315789/a56a2aeab2b9bd2fdf1d621c680740388c5c.png
+  blur: md
+  opacity: 40
+headerStyle: boxed 
+hideVersion: true
+
+title: Escanor
+
+providers:
+  openweathermap: openweathermapapikey
+  weatherapi: weatherapiapikey
