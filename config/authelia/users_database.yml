@@ -16,18 +16,3 @@ users:
     groups:
       - admins
       - dev
-  davide:
-    disabled: false
-    displayname: 'Davide'
-    email: davide@girori.net
-    password: "$argon2id$v=19$m=65536,t=3,p=4$cK+uFabP24WajIoSGuyV+A$NmIZY1IYGykML9ZC0ZHo7XWJdRJ3QVLrdUhNpZyxYLA"
-    groups:
-      - admins
-      - dev
-  rahmi:
-    disabled: false
-    displayname: 'Rahmi'
-    email: rahmi@wasd.com
-    password: "$argon2id$v=19$m=65536,t=3,p=4$KENf5KH4q0fRf7VOk4RUcA$2Wx6UMYK6H/BTIMHT23o0B0MWQ8GiePH1ev74ab5IKg"
-    groups:
-      - dev
